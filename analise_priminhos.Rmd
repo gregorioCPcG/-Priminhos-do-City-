@@ -1,0 +1,85 @@
+---
+title: "priminhos do city"
+author: "Gregorio ULSILVA"
+date: "12/11/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(readxl)
+dados <- read_excel("dados.xlsx")
+library(knitr)
+library(kableExtra)
+library(huxtable)
+library(coefplot)
+```
+
+Inspirado pela fala do comentarista Ubiratan Leal no podcast futebol no mundo (#54), essa "pequenina" análise , se debruçará sobre os "priminhos"(como disse o nobre comentarista) do City.
+
+o programa consta diponível em: https://open.spotify.com/episode/71oEZ9x1L0U7bwRzSXUWtN
+
+Toda análise foi rodada no software R.
+
+Quais são as variáveis?
+
+```{r}
+glimpse(dados)
+```
+
+1- Clube - trata-se dos clubes (de futebol masculino) que foram "comprados"(ações) pelo grupo city, segundo o wikipedia ( https://en.wikipedia.org/wiki/City_Football_Group#CFG_owned_clubs ) . 
+
+2- as temporadas dos clubes desde que foram compradas
+
+3- a posição na liga, caso dispute divisões inferiores será considerado a posição na tábua nacional, exemplo Troyes em 20-21 ficou primeiro da Ligue 2, portanto posição 21 no país.
+
+4- continent - binarizado - sendo 'europa' e 'outros'
+
+5 - a dificuldade da liga foi dada pela pontuação no ranking 2020 do IFHHS ( fonte https://www.iffhs.com/posts/911 ).  Como achei somente as top 80, em dois casos (Austrália e Indía) coloquei a média da 80a colocada.
+
+Quais os casos selecionados?
+
+```{r}
+b5 <- dados %>% 
+  dplyr::select(clube, temporada, posicao, continent, dificuldadeLiga) %>% 
+  arrange(clube)
+b5 %>%
+  kbl(caption = "Priminhos do city") %>%
+  kable_classic(full_width = F, html_font = "Garamond")
+```
+
+# Análise
+
+O que pesa mais sobre a posição final do 'priminho', o continente ou a dificuldade da liga?
+
+Observação prévia- Fazemos aqui somente um exercício, sabe-se que o objetivo dos priminhos é a descoberta e formação de talentos. É mais uma homenagem estatística de um antigo fã do esporte. Ouvinte do programa desde "imemoriais tempos".
+
+A técnica adequada é regressão linear (se quiser saber mais sobre procure no google heheheh)
+
+```{r}
+modelo <- lm(posicao ~ continent + dificuldadeLiga, data = dados)
+huxreg(modelo, stars = c(`'` = 0.3,`''` = 0.2,`*` = 0.1, `**` = 0.05,
+                                         `***` = 0.01), statistics = c("N. obs." = "nobs", "R2" = "r.squared",
+                                                                       "AIC" = "AIC"))
+```
+
+Comentário:
+
+Perceba que pela estrelinha (90% de confiança) somente dificuldade da Liga é estatisticamente significante,  Isso é mais fácil de visualizar com um Plot da regressão:
+
+```{r}
+library(coefplot)
+coefplot(modelo, intercept = F)
+0.022 * 100
+```
+
+
+os casos de continentetem um intervalo largo e portanto não são estatisticamente significativos, já a dificuldade da liga tem um efeito. Se visualizar o resultado da regressão percebemos que a cada 1 ponto a mais no ranking de ligas, você tem uma elevação de cerca de 0,02 na posição (p > 0.1 ou 90% de confiança) ou seja se a liga for 100 pontos mais díficil, o modelo prevê uma posição 2.2 maior na tabela.
+
+Pronto a homenagem ao programa tá feita, desejo continuado sucesso ao podcast, abraços do fã de esporte
+
+PS: Como to aprendendo a mexer no software R me meti a fazer algumas análises nele - caso se interesse tem mais análises desse tipo, fiz algumas mais elaboradas aqui : https://bit.ly/3ghGuNy
+
+
+
+
